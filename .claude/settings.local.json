@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew :backend:compileJava -PskipFrontend)",
+      "Bash(./gradlew :backend:bootRun -PskipFrontend)",
+      "Bash(tasklist)",
+      "Bash(netstat -ano)",
+      "Bash(./gradlew :backend:test -PskipFrontend)",
+      "Bash(cp -r C:/Users/dongheekim/IdeaProjects/recipe-platform/gradle C:/Users/dongheekim/IdeaProjects/vorj/)",
+      "Bash(cp C:/Users/dongheekim/IdeaProjects/recipe-platform/gradlew C:/Users/dongheekim/IdeaProjects/recipe-platform/gradlew.bat C:/Users/dongheekim/IdeaProjects/vorj/)",
+      "Read(//c/Users/dongheekim/IdeaProjects/vorj/**)"
+    ]
+  }
+}

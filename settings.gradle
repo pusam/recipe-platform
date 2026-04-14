@@ -1,0 +1,6 @@
+rootProject.name = 'recipe-platform'
+
+include 'backend'
+include 'frontend'
+
+project(':frontend').buildFileName = 'build.gradle'

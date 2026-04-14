@@ -1,0 +1,65 @@
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+
+    // JWT
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    // H2 (기본 - 파일 기반)
+    runtimeOnly 'com.h2database:h2'
+
+    // MariaDB (선택 - 환경변수로 전환)
+    runtimeOnly 'org.mariadb.jdbc:mariadb-java-client:3.3.1'
+
+    // Flyway
+    implementation 'org.flywaydb:flyway-core'
+
+    // Jsoup (YouTube 페이지 파싱)
+    implementation 'org.jsoup:jsoup:1.17.2'
+
+    // Jackson (JSON parsing)
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// 프론트엔드 빌드
+task buildFrontend(type: Exec) {
+    workingDir '../frontend'
+    if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+        commandLine 'cmd', '/c', 'npm install && npm run build'
+    } else {
+        commandLine 'sh', '-c', 'npm install && npm run build'
+    }
+}
+
+task copyFrontend(type: Copy) {
+    dependsOn buildFrontend
+    from '../frontend/dist'
+    into 'build/resources/main/static'
+}
+
+if (!project.hasProperty('skipFrontend')) {
+    bootJar {
+        dependsOn copyFrontend
+    }
+    processResources {
+        dependsOn copyFrontend
+    }
+}

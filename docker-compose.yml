@@ -1,0 +1,39 @@
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: recipe
+      MARIADB_USER: recipe
+      MARIADB_PASSWORD: ${DB_PASSWORD:-recipe}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mariadb://db:3306/recipe
+      DB_USERNAME: recipe
+      DB_PASSWORD: ${DB_PASSWORD:-recipe}
+      DB_DRIVER: org.mariadb.jdbc.Driver
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_API_URL: ${GEMINI_API_URL:-https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent}
+      JWT_SECRET: ${JWT_SECRET:-please-change-this-secret-key-to-something-at-least-32-bytes-long}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS:-604800000}
+    ports:
+      - "8082:8082"
+
+volumes:
+  db_data:

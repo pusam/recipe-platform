@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/build
+**/.gradle
+**/.idea
+**/*.iml
+**/data
+**/*.log
+.env
+.git
