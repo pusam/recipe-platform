@@ -26,9 +26,9 @@ RUN addgroup -S app && adduser -S -G app app \
 COPY --from=backend-build --chown=app:app /app/backend/build/libs/*.jar app.jar
 
 USER app
-EXPOSE 8082
+EXPOSE 8083
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
-    CMD curl -fsS http://localhost:8082/api/recipes?size=1 >/dev/null || exit 1
+    CMD curl -fsS http://localhost:8083/api/recipes?size=1 >/dev/null || exit 1
 
 ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]

@@ -28,9 +28,10 @@ public class RecipeController {
     public ResponseEntity<Map<String, Object>> list(
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Page<RecipeDto> data = recipeService.search(q, tag, page, size);
+        Page<RecipeDto> data = recipeService.search(q, tag, sort, page, size);
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "data", data.getContent(),

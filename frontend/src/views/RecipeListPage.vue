@@ -1,15 +1,23 @@
 <template>
   <div>
     <div class="header-row">
-      <h1>저장된 레시피</h1>
-      <div class="search">
-        <input
-          v-model="q"
-          type="text"
-          placeholder="제목 검색..."
-          @keydown.enter="reload"
-        />
-        <button class="search-btn" @click="reload">검색</button>
+      <h1>레시피</h1>
+      <div class="controls">
+        <select v-model="sort" @change="reload" class="sort-select">
+          <option value="">최신순</option>
+          <option value="rating_count">리뷰 많은순</option>
+          <option value="score_desc">별점 높은순</option>
+          <option value="score_asc">별점 낮은순</option>
+        </select>
+        <div class="search">
+          <input
+            v-model="q"
+            type="text"
+            placeholder="제목 검색..."
+            @keydown.enter="reload"
+          />
+          <button class="search-btn" @click="reload">검색</button>
+        </div>
       </div>
     </div>
 
@@ -72,6 +80,7 @@ export default {
       recipes: [],
       loading: true,
       q: '',
+      sort: '',
       activeTag: '',
       page: 0,
       size: 12,
@@ -81,12 +90,14 @@ export default {
   mounted() {
     this.activeTag = this.$route.query.tag || ''
     this.q = this.$route.query.q || ''
+    this.sort = this.$route.query.sort || ''
     this.reload()
   },
   watch: {
     '$route.query'() {
       this.activeTag = this.$route.query.tag || ''
       this.q = this.$route.query.q || ''
+      this.sort = this.$route.query.sort || ''
       this.reload()
     }
   },
@@ -107,7 +118,7 @@ export default {
       this.loading = true
       try {
         const res = await recipeAPI.list({
-          q: this.q, tag: this.activeTag, page: this.page, size: this.size
+          q: this.q, tag: this.activeTag, sort: this.sort, page: this.page, size: this.size
         })
         if (res.data?.success) {
           this.recipes = this.page === 0
@@ -135,6 +146,13 @@ export default {
   flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
 }
 h1 { margin: 0; }
+.controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.sort-select {
+  padding: 10px 14px; border-radius: 10px;
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+  color: inherit; font-size: 0.9rem; outline: none; cursor: pointer;
+}
+.sort-select:focus { border-color: #f59e0b; }
 .search { display: flex; gap: 8px; }
 .search input {
   padding: 10px 14px;

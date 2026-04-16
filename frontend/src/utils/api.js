@@ -33,8 +33,8 @@ apiClient.interceptors.response.use(
 export default apiClient
 
 export const recipeAPI = {
-  list({ q = '', tag = '', page = 0, size = 20 } = {}) {
-    return apiClient.get('/recipes', { params: { q, tag, page, size } })
+  list({ q = '', tag = '', sort = '', page = 0, size = 20 } = {}) {
+    return apiClient.get('/recipes', { params: { q, tag, sort, page, size } })
   },
   get(id) { return apiClient.get(`/recipes/${id}`) },
   create(youtubeUrl) { return apiClient.post('/recipes', { youtubeUrl }) },

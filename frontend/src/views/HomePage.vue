@@ -30,22 +30,65 @@
       </div>
     </section>
 
-    <section v-if="!authStore.isAuthenticated" class="guest-hint">
-      <p>
-        로그인하면 <router-link to="/signup">가입</router-link>한 내 레시피와
-        즐겨찾기를 한눈에 볼 수 있습니다.
-      </p>
+    <section v-if="popular.length" class="popular-section">
+      <div class="section-head">
+        <h2>인기 레시피</h2>
+        <router-link to="/recipes?sort=rating_count" class="more-link">전체 보기 →</router-link>
+      </div>
+      <div class="grid">
+        <router-link
+          v-for="r in popular"
+          :key="'pop-'+r.id"
+          :to="`/recipes/${r.id}`"
+          class="card recipe-card"
+        >
+          <img v-if="r.thumbnailUrl" :src="r.thumbnailUrl" :alt="r.title" />
+          <div class="meta">
+            <h3>{{ r.title }}</h3>
+            <p>{{ r.channelName }}</p>
+            <div class="card-rating" v-if="r.ratingCount">
+              <span class="stars">★ {{ r.avgScore != null ? r.avgScore.toFixed(1) : '-' }}</span>
+              <span class="cnt">({{ r.ratingCount }})</span>
+            </div>
+          </div>
+        </router-link>
+      </div>
+    </section>
+
+    <section v-if="topRated.length" class="top-section">
+      <div class="section-head">
+        <h2>별점 높은 레시피</h2>
+        <router-link to="/recipes?sort=score_desc" class="more-link">전체 보기 →</router-link>
+      </div>
+      <div class="grid">
+        <router-link
+          v-for="r in topRated"
+          :key="'top-'+r.id"
+          :to="`/recipes/${r.id}`"
+          class="card recipe-card"
+        >
+          <img v-if="r.thumbnailUrl" :src="r.thumbnailUrl" :alt="r.title" />
+          <div class="meta">
+            <h3>{{ r.title }}</h3>
+            <p>{{ r.channelName }}</p>
+            <div class="card-rating" v-if="r.ratingCount">
+              <span class="stars">★ {{ r.avgScore != null ? r.avgScore.toFixed(1) : '-' }}</span>
+              <span class="cnt">({{ r.ratingCount }})</span>
+            </div>
+          </div>
+        </router-link>
+      </div>
     </section>
 
     <section v-if="authStore.isAuthenticated && favorites.length" class="fav-section">
       <div class="section-head">
-        <h2>⭐ 내 즐겨찾기</h2>
+        <h2>내 즐겨찾기</h2>
         <router-link to="/favorites" class="more-link">전체 보기 →</router-link>
       </div>
       <div class="grid">
         <router-link
           v-for="r in favorites.slice(0, 4)"
-          :key="r.id"
+          :key="'fav-'+r.id"
           :to="`/recipes/${r.id}`"
           class="card recipe-card"
         >
@@ -58,15 +101,15 @@
       </div>
     </section>
 
-    <section v-if="authStore.isAuthenticated && recent.length" class="recent">
+    <section v-if="recent.length" class="recent">
       <div class="section-head">
-        <h2>최근 추출한 레시피</h2>
+        <h2>최근 등록된 레시피</h2>
         <router-link to="/recipes" class="more-link">전체 보기 →</router-link>
       </div>
       <div class="grid">
         <router-link
           v-for="r in recent"
-          :key="r.id"
+          :key="'rec-'+r.id"
           :to="`/recipes/${r.id}`"
           class="card recipe-card"
         >
@@ -78,6 +121,12 @@
           </div>
         </router-link>
       </div>
+    </section>
+
+    <section v-if="!authStore.isAuthenticated" class="guest-hint">
+      <p>
+        <router-link to="/signup">가입</router-link>하면 레시피를 직접 추출하고, 즐겨찾기와 평점을 남길 수 있습니다.
+      </p>
     </section>
   </div>
 </template>
@@ -101,6 +150,8 @@ export default {
       url: '',
       loading: false,
       error: null,
+      popular: [],
+      topRated: [],
       recent: [],
       favorites: [],
       authStore,
@@ -114,18 +165,32 @@ export default {
     stepMessage() { return LOADING_STEPS[this.stepIdx] }
   },
   mounted() {
+    this.loadPopular()
+    this.loadTopRated()
+    this.loadRecent()
     if (authStore.isAuthenticated) {
-      this.loadRecent()
       this.loadFavorites()
     }
   },
   beforeUnmount() { this.stopTimers() },
   methods: {
+    async loadPopular() {
+      try {
+        const res = await recipeAPI.list({ sort: 'rating_count', size: 4 })
+        if (res.data?.success) this.popular = (res.data.data || []).filter(r => r.ratingCount > 0)
+      } catch { /* ignore */ }
+    },
+    async loadTopRated() {
+      try {
+        const res = await recipeAPI.list({ sort: 'score_desc', size: 4 })
+        if (res.data?.success) this.topRated = (res.data.data || []).filter(r => r.ratingCount > 0)
+      } catch { /* ignore */ }
+    },
     async loadRecent() {
       try {
         const res = await recipeAPI.list({ size: 6 })
         if (res.data?.success) this.recent = res.data.data || []
-      } catch (e) { /* ignore */ }
+      } catch { /* ignore */ }
     },
     async loadFavorites() {
       try {
@@ -259,4 +324,8 @@ export default {
 .recipe-card h3 { font-size: 0.95rem; margin: 0 0 4px; line-height: 1.4; }
 .recipe-card p { opacity: 0.6; margin: 0 0 4px; font-size: 0.85rem; }
 .recipe-card small { opacity: 0.4; font-size: 0.75rem; }
+.card-rating { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 0.8rem; }
+.card-rating .stars { color: #f59e0b; font-weight: 600; }
+.card-rating .cnt { opacity: 0.5; }
+.popular-section, .top-section { margin-top: 40px; }
 </style>

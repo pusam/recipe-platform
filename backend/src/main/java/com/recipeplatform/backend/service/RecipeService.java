@@ -31,9 +31,15 @@ public class RecipeService {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional(readOnly = true)
-    public Page<RecipeDto> search(String q, String tag, int page, int size) {
+    public Page<RecipeDto> search(String q, String tag, String sort, int page, int size) {
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(Math.max(1, size), 100));
-        return recipeRepository.search(q, tag, pageable).map(RecipeDto::summary);
+        Page<Recipe> result = switch (sort == null ? "" : sort) {
+            case "rating_count" -> recipeRepository.searchByRatingCount(q, tag, pageable);
+            case "score_desc" -> recipeRepository.searchByScoreDesc(q, tag, pageable);
+            case "score_asc" -> recipeRepository.searchByScoreAsc(q, tag, pageable);
+            default -> recipeRepository.search(q, tag, pageable);
+        };
+        return result.map(RecipeDto::summary);
     }
 
     @Transactional(readOnly = true)

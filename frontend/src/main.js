@@ -17,7 +17,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'Home', component: HomePage },
-    { path: '/recipes', name: 'Recipes', component: RecipeListPage, meta: { requiresAuth: true } },
+    { path: '/recipes', name: 'Recipes', component: RecipeListPage },
     { path: '/recipes/:id', name: 'RecipeDetail', component: RecipeDetailPage, props: true },
     {
       path: '/recipes/:id/edit',

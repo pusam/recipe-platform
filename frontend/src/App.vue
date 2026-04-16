@@ -5,7 +5,7 @@
         <router-link to="/" class="brand">🍳 Recipe Platform</router-link>
         <nav>
           <router-link to="/">홈</router-link>
-          <router-link v-if="authStore.isAuthenticated" to="/recipes">저장된 레시피</router-link>
+          <router-link to="/recipes">레시피</router-link>
           <router-link v-if="authStore.isAuthenticated" to="/favorites">⭐ 즐겨찾기</router-link>
           <router-link v-if="authStore.isAuthenticated" to="/profile">프로필</router-link>
         </nav>

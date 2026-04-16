@@ -27,4 +27,31 @@ public interface RecipeRepository extends JpaRepository<Recipe, Long> {
            ORDER BY r.createdAt DESC
            """)
     Page<Recipe> search(@Param("q") String q, @Param("tag") String tag, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"creator"})
+    @Query("""
+           SELECT r FROM Recipe r
+           WHERE (:q IS NULL OR :q = '' OR LOWER(r.title) LIKE LOWER(CONCAT('%', :q, '%')))
+             AND (:tag IS NULL OR :tag = '' OR LOWER(r.tags) LIKE LOWER(CONCAT('%', :tag, '%')))
+           ORDER BY r.ratingCount DESC, r.avgScore DESC NULLS LAST, r.createdAt DESC
+           """)
+    Page<Recipe> searchByRatingCount(@Param("q") String q, @Param("tag") String tag, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"creator"})
+    @Query("""
+           SELECT r FROM Recipe r
+           WHERE (:q IS NULL OR :q = '' OR LOWER(r.title) LIKE LOWER(CONCAT('%', :q, '%')))
+             AND (:tag IS NULL OR :tag = '' OR LOWER(r.tags) LIKE LOWER(CONCAT('%', :tag, '%')))
+           ORDER BY r.avgScore DESC NULLS LAST, r.ratingCount DESC, r.createdAt DESC
+           """)
+    Page<Recipe> searchByScoreDesc(@Param("q") String q, @Param("tag") String tag, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"creator"})
+    @Query("""
+           SELECT r FROM Recipe r
+           WHERE (:q IS NULL OR :q = '' OR LOWER(r.title) LIKE LOWER(CONCAT('%', :q, '%')))
+             AND (:tag IS NULL OR :tag = '' OR LOWER(r.tags) LIKE LOWER(CONCAT('%', :tag, '%')))
+           ORDER BY r.avgScore ASC NULLS LAST, r.ratingCount DESC, r.createdAt DESC
+           """)
+    Page<Recipe> searchByScoreAsc(@Param("q") String q, @Param("tag") String tag, Pageable pageable);
 }
