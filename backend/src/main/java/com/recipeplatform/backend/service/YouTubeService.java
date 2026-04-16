@@ -2,14 +2,21 @@ package com.recipeplatform.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,7 +30,15 @@ public class YouTubeService {
     private static final Pattern PLAYER_RESPONSE = Pattern.compile(
             "ytInitialPlayerResponse\\s*=\\s*(\\{.*?\\})\\s*;\\s*(?:var|window|</script>)", Pattern.DOTALL);
 
+    private static final HttpClient HTTP_CLIENT = HttpClient.create()
+            .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
+            .responseTimeout(Duration.ofSeconds(20))
+            .doOnConnected(c -> c
+                    .addHandlerLast(new ReadTimeoutHandler(20, TimeUnit.SECONDS))
+                    .addHandlerLast(new WriteTimeoutHandler(10, TimeUnit.SECONDS)));
+
     private final WebClient webClient = WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(HTTP_CLIENT))
             .defaultHeader("User-Agent",
                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36")
             .defaultHeader("Accept-Language", "ko,en;q=0.9")

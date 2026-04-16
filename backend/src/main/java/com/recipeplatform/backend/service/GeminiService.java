@@ -2,14 +2,22 @@ package com.recipeplatform.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.channel.ChannelOption;
+import io.netty.handler.timeout.ReadTimeoutHandler;
+import io.netty.handler.timeout.WriteTimeoutHandler;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -21,11 +29,24 @@ public class GeminiService {
     @Value("${gemini.api.key}")
     private String apiKey;
 
-    private final WebClient webClient = WebClient.builder()
-            .codecs(c -> c.defaultCodecs().maxInMemorySize(4 * 1024 * 1024))
-            .build();
+    private WebClient webClient;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @PostConstruct
+    void init() {
+        HttpClient httpClient = HttpClient.create()
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10_000)
+                .responseTimeout(Duration.ofSeconds(60))
+                .doOnConnected(c -> c
+                        .addHandlerLast(new ReadTimeoutHandler(60, TimeUnit.SECONDS))
+                        .addHandlerLast(new WriteTimeoutHandler(30, TimeUnit.SECONDS)));
+
+        this.webClient = WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .codecs(c -> c.defaultCodecs().maxInMemorySize(4 * 1024 * 1024))
+                .build();
+    }
 
     public String generate(String prompt) {
         if (apiKey == null || apiKey.isBlank()) {
@@ -44,7 +65,8 @@ public class GeminiService {
 
         try {
             String response = webClient.post()
-                    .uri(apiUrl + "?key=" + apiKey)
+                    .uri(apiUrl)
+                    .header("x-goog-api-key", apiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .bodyValue(body)
                     .retrieve()
@@ -56,11 +78,13 @@ public class GeminiService {
             if (parts.isArray() && !parts.isEmpty()) {
                 return parts.get(0).path("text").asText();
             }
-            log.warn("Gemini 응답에서 텍스트 추출 실패: {}", response);
+            log.warn("Gemini 응답에서 텍스트 추출 실패");
             throw new IllegalStateException("Gemini 응답이 비어있습니다.");
+        } catch (IllegalStateException e) {
+            throw e;
         } catch (Exception e) {
-            log.error("Gemini 호출 실패", e);
-            throw new RuntimeException("AI 추출에 실패했습니다: " + e.getMessage(), e);
+            log.error("Gemini 호출 실패: {}", e.getClass().getSimpleName(), e);
+            throw new RecipeService.RecipeProcessingException("AI 추출 실패", e);
         }
     }
 }
