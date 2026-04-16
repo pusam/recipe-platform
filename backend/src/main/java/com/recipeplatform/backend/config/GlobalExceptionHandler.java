@@ -1,5 +1,6 @@
 package com.recipeplatform.backend.config;
 
+import com.recipeplatform.backend.security.RateLimitExceededException;
 import com.recipeplatform.backend.service.RecipeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleUnauthorized(AuthenticationException e) {
         return body(HttpStatus.UNAUTHORIZED, "인증이 필요합니다.");
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<Map<String, Object>> handleRateLimit(RateLimitExceededException e) {
+        return body(HttpStatus.TOO_MANY_REQUESTS, e.getMessage());
     }
 
     @ExceptionHandler(RecipeService.RecipeProcessingException.class)

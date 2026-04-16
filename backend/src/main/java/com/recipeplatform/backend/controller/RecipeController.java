@@ -3,6 +3,8 @@ package com.recipeplatform.backend.controller;
 import com.recipeplatform.backend.dto.CreateRecipeRequest;
 import com.recipeplatform.backend.dto.RecipeDto;
 import com.recipeplatform.backend.dto.UpdateRecipeRequest;
+import com.recipeplatform.backend.security.RateLimitExceededException;
+import com.recipeplatform.backend.security.RateLimiter;
 import com.recipeplatform.backend.security.UserPrincipal;
 import com.recipeplatform.backend.service.RecipeService;
 import jakarta.validation.Valid;
@@ -20,6 +22,7 @@ import java.util.Map;
 public class RecipeController {
 
     private final RecipeService recipeService;
+    private final RateLimiter rateLimiter;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> list(
@@ -49,6 +52,10 @@ public class RecipeController {
     @PostMapping
     public ResponseEntity<Map<String, Object>> create(@Valid @RequestBody CreateRecipeRequest req,
                                                       @AuthenticationPrincipal UserPrincipal principal) {
+        String key = "recipe-create:" + principal.getId();
+        if (!rateLimiter.tryAcquire(key)) {
+            throw new RateLimitExceededException("요청이 너무 잦습니다. 잠시 후 다시 시도해주세요.");
+        }
         RecipeDto saved = recipeService.createFromYoutube(req.getYoutubeUrl(), principal.getUser());
         return ResponseEntity.ok(Map.of("success", true, "data", saved));
     }
