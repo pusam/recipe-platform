@@ -50,6 +50,18 @@ export const authAPI = {
   changePassword(payload) { return apiClient.put('/users/me/password', payload) }
 }
 
+export const ratingAPI = {
+  list(recipeId, { page = 0, size = 20 } = {}) {
+    return apiClient.get(`/recipes/${recipeId}/ratings`, { params: { page, size } })
+  },
+  upsert(recipeId, { score, comment }) {
+    return apiClient.put(`/recipes/${recipeId}/ratings`, { score, comment })
+  },
+  remove(recipeId) {
+    return apiClient.delete(`/recipes/${recipeId}/ratings/me`)
+  }
+}
+
 export const favoriteAPI = {
   list() { return apiClient.get('/users/me/favorites') },
   status(recipeId) { return apiClient.get(`/favorites/${recipeId}`) },

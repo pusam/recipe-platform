@@ -71,6 +71,72 @@
       </ol>
     </section>
 
+    <!-- 평점 & 리뷰 -->
+    <section class="card rating-section">
+      <h2>평점</h2>
+
+      <!-- 집계 -->
+      <div class="rating-overview">
+        <div class="big-score">
+          <span class="number">{{ avgDisplay }}</span>
+          <StarRating :modelValue="Math.round(recipe.avgScore || 0)" readonly />
+          <span class="count">{{ ratingCount }}개 리뷰</span>
+        </div>
+        <div class="distribution">
+          <div v-for="n in [5,4,3,2,1]" :key="n" class="dist-row">
+            <span class="label">{{ n }}★</span>
+            <div class="bar-bg">
+              <div class="bar-fill" :style="{ width: distPercent(n) + '%' }"></div>
+            </div>
+            <span class="dist-count">{{ distribution[n] || 0 }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 내 평점 -->
+      <div v-if="authStore.isAuthenticated" class="my-rating">
+        <h3>{{ myRating ? '내 평점 수정' : '평점 남기기' }}</h3>
+        <div class="rate-form">
+          <StarRating v-model="myScore" />
+          <textarea
+            v-model="myComment"
+            placeholder="한줄평 (선택)"
+            maxlength="2000"
+            rows="2"
+          ></textarea>
+          <div class="rate-actions">
+            <button class="submit-btn" @click="submitRating" :disabled="myScore < 1 || ratingLoading">
+              {{ ratingLoading ? '저장 중...' : '저장' }}
+            </button>
+            <button v-if="myRating" class="delete-rating" @click="deleteRating" :disabled="ratingLoading">
+              삭제
+            </button>
+          </div>
+        </div>
+      </div>
+      <div v-else class="login-to-rate">
+        <router-link :to="{ path: '/login', query: { redirect: $route.fullPath } }">
+          로그인하고 평점 남기기
+        </router-link>
+      </div>
+
+      <!-- 리뷰 목록 -->
+      <div v-if="reviews.length" class="reviews">
+        <h3>리뷰 ({{ ratingCount }})</h3>
+        <div v-for="r in reviews" :key="r.id" class="review-item">
+          <div class="review-header">
+            <StarRating :modelValue="r.score" readonly />
+            <span class="reviewer">{{ r.username }}</span>
+            <span class="review-date">{{ formatDate(r.createdAt) }}</span>
+          </div>
+          <p v-if="r.comment" class="review-comment">{{ r.comment }}</p>
+        </div>
+        <button v-if="reviewHasNext" class="more-btn" @click="loadMoreReviews" :disabled="reviewLoading">
+          {{ reviewLoading ? '불러오는 중...' : '더 보기' }}
+        </button>
+      </div>
+    </section>
+
     <div v-if="isOwner" class="owner-actions">
       <router-link :to="`/recipes/${recipe.id}/edit`" class="edit">✏️ 편집</router-link>
       <button class="delete" @click="remove">🗑 삭제</button>
@@ -81,11 +147,13 @@
 </template>
 
 <script>
-import { recipeAPI, favoriteAPI } from '@/utils/api'
+import { recipeAPI, favoriteAPI, ratingAPI } from '@/utils/api'
 import { authStore } from '@/stores/auth'
+import StarRating from '@/components/StarRating.vue'
 
 export default {
   name: 'RecipeDetailPage',
+  components: { StarRating },
   props: ['id'],
   data() {
     return {
@@ -94,7 +162,18 @@ export default {
       isFavorite: false,
       favLoading: false,
       shared: false,
-      authStore
+      authStore,
+      // ratings
+      myScore: 0,
+      myComment: '',
+      myRating: null,
+      distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+      ratingCount: 0,
+      reviews: [],
+      reviewPage: 0,
+      reviewHasNext: false,
+      reviewLoading: false,
+      ratingLoading: false
     }
   },
   computed: {
@@ -105,6 +184,10 @@ export default {
       return authStore.isAuthenticated
         && this.recipe?.creatorId
         && authStore.user?.id === this.recipe.creatorId
+    },
+    avgDisplay() {
+      const v = this.recipe?.avgScore
+      return v != null ? v.toFixed(1) : '-'
     }
   },
   mounted() { this.load() },
@@ -114,17 +197,98 @@ export default {
       this.recipe = null
       this.error = null
       this.isFavorite = false
+      this.reviews = []
+      this.reviewPage = 0
       try {
         const res = await recipeAPI.get(this.id)
         if (res.data?.success) {
           this.recipe = res.data.data
+          this.ratingCount = this.recipe.ratingCount || 0
           if (authStore.isAuthenticated) await this.loadFavoriteStatus()
+          await this.loadRatings()
         } else {
           this.error = res.data?.message || '불러오기 실패'
         }
       } catch (e) {
         this.error = e.response?.data?.message || e.message
       }
+    },
+    async loadRatings() {
+      try {
+        const res = await ratingAPI.list(this.id, { page: 0, size: 20 })
+        if (res.data?.success) {
+          this.reviews = res.data.data || []
+          this.reviewHasNext = !!res.data.page?.hasNext
+          this.reviewPage = 0
+          this.applyAggregate(res.data.aggregate)
+        }
+      } catch { /* ignore */ }
+    },
+    async loadMoreReviews() {
+      this.reviewLoading = true
+      try {
+        this.reviewPage++
+        const res = await ratingAPI.list(this.id, { page: this.reviewPage, size: 20 })
+        if (res.data?.success) {
+          this.reviews.push(...(res.data.data || []))
+          this.reviewHasNext = !!res.data.page?.hasNext
+        }
+      } finally { this.reviewLoading = false }
+    },
+    applyAggregate(agg) {
+      if (!agg) return
+      this.ratingCount = agg.ratingCount || 0
+      if (this.recipe) {
+        this.recipe.avgScore = agg.averageScore
+        this.recipe.ratingCount = agg.ratingCount
+      }
+      this.distribution = agg.distribution || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+      if (agg.myRating) {
+        this.myRating = agg.myRating
+        this.myScore = agg.myRating.score
+        this.myComment = agg.myRating.comment || ''
+      } else {
+        this.myRating = null
+        this.myScore = 0
+        this.myComment = ''
+      }
+    },
+    distPercent(n) {
+      if (!this.ratingCount) return 0
+      return ((this.distribution[n] || 0) / this.ratingCount * 100).toFixed(1)
+    },
+    async submitRating() {
+      if (this.myScore < 1) return
+      this.ratingLoading = true
+      try {
+        const res = await ratingAPI.upsert(this.id, { score: this.myScore, comment: this.myComment || null })
+        if (res.data?.success) {
+          this.applyAggregate(res.data.aggregate)
+          await this.loadRatings()
+        }
+      } catch (e) {
+        alert(e.response?.data?.message || e.message)
+      } finally { this.ratingLoading = false }
+    },
+    async deleteRating() {
+      if (!confirm('평점을 삭제하시겠습니까?')) return
+      this.ratingLoading = true
+      try {
+        const res = await ratingAPI.remove(this.id)
+        if (res.data?.success) {
+          this.applyAggregate(res.data.aggregate)
+          this.myRating = null
+          this.myScore = 0
+          this.myComment = ''
+          await this.loadRatings()
+        }
+      } catch (e) {
+        alert(e.response?.data?.message || e.message)
+      } finally { this.ratingLoading = false }
+    },
+    formatDate(dt) {
+      if (!dt) return ''
+      return new Date(dt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'short', day: 'numeric' })
     },
     async loadFavoriteStatus() {
       try {
@@ -250,6 +414,59 @@ h1 { margin: 0 0 8px; flex: 1; min-width: 220px; }
   color: #fca5a5;
 }
 .delete:hover { background: rgba(248,113,113,0.1); }
+
+/* ---------- Rating section ---------- */
+.rating-section h2 { margin-bottom: 20px; }
+.rating-overview { display: flex; gap: 32px; flex-wrap: wrap; margin-bottom: 24px; }
+.big-score { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 100px; }
+.big-score .number { font-size: 2.4rem; font-weight: 700; color: #f59e0b; line-height: 1; }
+.big-score .count { font-size: 0.8rem; opacity: 0.5; }
+.distribution { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 4px; }
+.dist-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; }
+.dist-row .label { width: 28px; text-align: right; opacity: 0.7; }
+.bar-bg { flex: 1; height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: #f59e0b; border-radius: 4px; transition: width 0.3s; }
+.dist-count { width: 28px; opacity: 0.5; font-size: 0.75rem; }
+
+.my-rating { margin-bottom: 24px; }
+.my-rating h3 { font-size: 1rem; margin: 0 0 12px; opacity: 0.9; }
+.rate-form { display: flex; flex-direction: column; gap: 10px; }
+.rate-form textarea {
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px; padding: 10px 14px; color: inherit; resize: vertical;
+  font-size: 0.9rem; outline: none;
+}
+.rate-form textarea:focus { border-color: #f59e0b; }
+.rate-actions { display: flex; gap: 8px; }
+.submit-btn {
+  padding: 8px 20px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #1a1a2e; font-weight: 600; cursor: pointer; font-size: 0.9rem;
+}
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.delete-rating {
+  padding: 8px 14px; border-radius: 10px; background: none;
+  border: 1px solid rgba(248,113,113,0.4); color: #fca5a5; cursor: pointer; font-size: 0.85rem;
+}
+.delete-rating:hover { background: rgba(248,113,113,0.1); }
+.login-to-rate { margin-bottom: 20px; }
+.login-to-rate a { color: #f59e0b; opacity: 0.8; font-size: 0.9rem; }
+
+.reviews h3 { font-size: 1rem; margin: 0 0 14px; opacity: 0.9; }
+.review-item {
+  padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.review-item:last-child { border-bottom: none; }
+.review-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.reviewer { font-weight: 500; font-size: 0.9rem; }
+.review-date { font-size: 0.75rem; opacity: 0.4; }
+.review-comment { margin: 8px 0 0; font-size: 0.9rem; line-height: 1.5; opacity: 0.85; }
+.reviews .more-btn {
+  display: block; margin: 16px auto 0; padding: 8px 24px; border-radius: 10px;
+  background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+  color: inherit; cursor: pointer; font-size: 0.85rem;
+}
+.reviews .more-btn:hover:not(:disabled) { background: rgba(245,158,11,0.1); }
 
 .loading, .error { text-align: center; padding: 60px 0; opacity: 0.6; }
 .error { color: #fca5a5; }

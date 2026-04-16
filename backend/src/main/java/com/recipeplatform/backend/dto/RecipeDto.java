@@ -33,6 +33,8 @@ public class RecipeDto {
     private LocalDateTime createdAt;
     private Long creatorId;
     private String creatorName;
+    private Double avgScore;
+    private Integer ratingCount;
 
     @Data @Builder @NoArgsConstructor @AllArgsConstructor
     public static class IngredientDto {
@@ -66,6 +68,8 @@ public class RecipeDto {
                 .createdAt(r.getCreatedAt())
                 .creatorId(r.getCreator() == null ? null : r.getCreator().getId())
                 .creatorName(r.getCreator() == null ? null : r.getCreator().getUsername())
+                .avgScore(r.getAvgScore())
+                .ratingCount(r.getRatingCount())
                 .build();
     }
 
@@ -83,6 +87,8 @@ public class RecipeDto {
                 .createdAt(r.getCreatedAt())
                 .creatorId(r.getCreator() == null ? null : r.getCreator().getId())
                 .creatorName(r.getCreator() == null ? null : r.getCreator().getUsername())
+                .avgScore(r.getAvgScore())
+                .ratingCount(r.getRatingCount())
                 .build();
     }
 

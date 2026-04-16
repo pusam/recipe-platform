@@ -38,6 +38,9 @@
           <div class="tags">
             <span v-if="r.cookingTime">⏱ {{ r.cookingTime }}</span>
             <span v-if="r.difficulty">📊 {{ r.difficulty }}</span>
+            <span v-if="r.ratingCount" class="rating-badge">
+              ★ {{ r.avgScore != null ? r.avgScore.toFixed(1) : '-' }} ({{ r.ratingCount }})
+            </span>
           </div>
           <div v-if="tagsOf(r).length" class="tag-row">
             <button
@@ -182,6 +185,7 @@ h1 { margin: 0; }
 .meta .creator { opacity: 0.5; font-size: 0.75rem; margin: 0 0 8px; }
 .tags { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .tags span { font-size: 0.75rem; opacity: 0.7; padding: 2px 8px; background: rgba(255,255,255,0.06); border-radius: 999px; }
+.rating-badge { color: #fbbf24 !important; background: rgba(245,158,11,0.12) !important; opacity: 1 !important; }
 .tag-row { display: flex; gap: 6px; flex-wrap: wrap; }
 .tag-chip.clickable {
   font-size: 0.72rem; background: rgba(245,158,11,0.1);

@@ -53,6 +53,13 @@ public class Recipe {
     @Column(name = "raw_transcript")
     private String rawTranscript;
 
+    @Column(name = "avg_score")
+    private Double avgScore;
+
+    @Column(name = "rating_count", nullable = false)
+    @Builder.Default
+    private Integer ratingCount = 0;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

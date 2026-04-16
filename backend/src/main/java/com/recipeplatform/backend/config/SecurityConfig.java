@@ -74,6 +74,7 @@ public class SecurityConfig {
                             // 공개 API
                             .requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers(HttpMethod.GET, "/api/recipes", "/api/recipes/*").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/api/recipes/*/ratings").permitAll()
                             // 그 외 모든 /api 경로는 인증 필요 (기본 거부)
                             .requestMatchers("/api/**").authenticated()
                             // SPA 및 정적 리소스 등 비-API 경로는 허용
