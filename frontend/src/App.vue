@@ -80,4 +80,32 @@ a { color: inherit; text-decoration: none; }
 .link-btn { background: none; border: none; color: inherit; cursor: pointer; padding: 6px 12px; font-size: 0.9rem; opacity: 0.7; }
 .link-btn:hover { opacity: 1; }
 .content { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
+
+@media (max-width: 768px) {
+  .nav {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+    gap: 8px;
+  }
+  .brand { font-size: 1.1rem; }
+  .nav nav {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    gap: 4px;
+    justify-content: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 8px;
+  }
+  .nav nav a { font-size: 0.85rem; padding: 6px 10px; }
+  .auth { font-size: 0.8rem; gap: 8px; }
+  .auth .signup-link { padding: 5px 10px; font-size: 0.8rem; }
+  .content { padding: 20px 14px; }
+}
+
+@media (max-width: 380px) {
+  .nav nav { gap: 2px; }
+  .nav nav a { font-size: 0.78rem; padding: 5px 6px; }
+  .content { padding: 16px 10px; }
+}
 </style>

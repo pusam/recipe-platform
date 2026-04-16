@@ -220,4 +220,20 @@ h1 { margin: 0; }
 }
 .more-btn:hover:not(:disabled) { background: rgba(245,158,11,0.1); }
 .more-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+@media (max-width: 768px) {
+  .header-row { flex-direction: column; align-items: stretch; gap: 12px; }
+  h1 { font-size: 1.3rem; }
+  .controls { flex-direction: column; gap: 8px; }
+  .sort-select { width: 100%; }
+  .search { width: 100%; }
+  .search input { min-width: unset; flex: 1; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .meta { padding: 10px 14px 14px; }
+  .meta h3 { font-size: 0.9rem; }
+}
+
+@media (max-width: 380px) {
+  .grid { grid-template-columns: 1fr; }
+}
 </style>

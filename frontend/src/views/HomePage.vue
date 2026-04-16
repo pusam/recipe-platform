@@ -328,4 +328,22 @@ export default {
 .card-rating .stars { color: #f59e0b; font-weight: 600; }
 .card-rating .cnt { opacity: 0.5; }
 .popular-section, .top-section { margin-top: 40px; }
+
+@media (max-width: 768px) {
+  .hero h1 { font-size: 1.4rem; }
+  .hero p { font-size: 0.9rem; }
+  .card { padding: 16px; }
+  .input-row { flex-direction: column; gap: 10px; }
+  .input-row input { font-size: 0.95rem; padding: 12px 14px; }
+  .input-row button { min-width: unset; width: 100%; padding: 12px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .section-head { flex-wrap: wrap; gap: 8px; }
+  .section-head h2 { font-size: 1.1rem; }
+  .fav-section, .recent, .popular-section, .top-section { margin-top: 28px; }
+}
+
+@media (max-width: 380px) {
+  .hero h1 { font-size: 1.2rem; }
+  .grid { grid-template-columns: 1fr; }
+}
 </style>

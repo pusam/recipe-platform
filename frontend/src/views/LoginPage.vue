@@ -174,4 +174,10 @@ button[type="submit"]:disabled { opacity: 0.5; cursor: not-allowed; }
   opacity: 0.5;
 }
 .back-home:hover { opacity: 0.8; }
+
+@media (max-width: 480px) {
+  .panel { padding: 28px 20px; border-radius: 18px; }
+  h1 { font-size: 1.3rem; }
+  .subtitle { font-size: 0.85rem; margin-bottom: 20px; }
+}
 </style>

@@ -10,6 +10,7 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -51,6 +52,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleRecipeProcessing(RecipeService.RecipeProcessingException e) {
         log.warn("레시피 처리 실패: {}", e.getMessage(), e);
         return body(HttpStatus.BAD_GATEWAY, "레시피를 생성하지 못했습니다. 잠시 후 다시 시도해주세요.");
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResource(NoResourceFoundException e) {
+        return ResponseEntity.notFound().build();
     }
 
     @ExceptionHandler(Exception.class)

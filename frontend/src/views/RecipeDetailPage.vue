@@ -470,4 +470,34 @@ h1 { margin: 0 0 8px; flex: 1; min-width: 220px; }
 
 .loading, .error { text-align: center; padding: 60px 0; opacity: 0.6; }
 .error { color: #fca5a5; }
+
+@media (max-width: 768px) {
+  .thumb-wrap { border-radius: 14px; margin-bottom: 16px; }
+  .thumb-wrap .play { font-size: 0.75rem; padding: 6px 10px; bottom: 10px; right: 10px; }
+  h1 { font-size: 1.2rem; min-width: unset; }
+  .title-row { gap: 10px; }
+  .actions { width: 100%; }
+  .fav-btn, .share-btn { font-size: 0.8rem; padding: 7px 12px; flex: 1; text-align: center; }
+  .channel { font-size: 0.85rem; margin-bottom: 10px; }
+  .summary { font-size: 0.9rem; }
+  .badges { gap: 8px; }
+  .badges span { font-size: 0.78rem; padding: 4px 10px; }
+  .card { padding: 16px; border-radius: 14px; margin-bottom: 14px; }
+  .card h2 { font-size: 1.05rem; margin-bottom: 12px; }
+  .steps { padding-left: 16px; }
+  .steps li { font-size: 0.9rem; margin-bottom: 12px; }
+  .rating-overview { gap: 20px; }
+  .big-score .number { font-size: 2rem; }
+  .distribution { min-width: 150px; }
+  .rate-form textarea { font-size: 0.85rem; }
+  .owner-actions { flex-wrap: wrap; }
+  .edit, .delete { flex: 1; text-align: center; padding: 10px 14px; font-size: 0.9rem; }
+}
+
+@media (max-width: 380px) {
+  h1 { font-size: 1.05rem; }
+  .card { padding: 12px; }
+  .rating-overview { flex-direction: column; align-items: stretch; }
+  .big-score { flex-direction: row; gap: 12px; justify-content: center; }
+}
 </style>

@@ -64,4 +64,15 @@ h1 { margin: 0 0 24px; }
 .meta p { opacity: 0.6; font-size: 0.85rem; margin: 0 0 8px; }
 .tags { display: flex; gap: 8px; flex-wrap: wrap; }
 .tags span { font-size: 0.75rem; opacity: 0.7; padding: 2px 8px; background: rgba(255,255,255,0.06); border-radius: 999px; }
+
+@media (max-width: 768px) {
+  h1 { font-size: 1.3rem; margin-bottom: 16px; }
+  .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+  .meta { padding: 10px 14px 14px; }
+  .meta h3 { font-size: 0.9rem; }
+}
+
+@media (max-width: 380px) {
+  .grid { grid-template-columns: 1fr; }
+}
 </style>
