@@ -12,7 +12,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -67,29 +66,5 @@ public class RecipeController {
                                                       @AuthenticationPrincipal UserPrincipal principal) {
         recipeService.delete(id, principal.getUser());
         return ResponseEntity.ok(Map.of("success", true));
-    }
-
-    @ExceptionHandler(RecipeService.AccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> forbidden(RuntimeException e) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("success", false);
-        body.put("message", e.getMessage());
-        return ResponseEntity.status(403).body(body);
-    }
-
-    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
-    public ResponseEntity<Map<String, Object>> badRequest(RuntimeException e) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("success", false);
-        body.put("message", e.getMessage());
-        return ResponseEntity.badRequest().body(body);
-    }
-
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> serverError(RuntimeException e) {
-        Map<String, Object> body = new HashMap<>();
-        body.put("success", false);
-        body.put("message", e.getMessage());
-        return ResponseEntity.internalServerError().body(body);
     }
 }

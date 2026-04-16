@@ -1,5 +1,5 @@
 # ---------- Stage 1: Build frontend ----------
-FROM node:20-alpine AS frontend-build
+FROM node:20.18-alpine AS frontend-build
 WORKDIR /app
 COPY frontend/package*.json ./frontend/
 RUN cd frontend && npm ci
@@ -7,7 +7,7 @@ COPY frontend ./frontend
 RUN cd frontend && npm run build
 
 # ---------- Stage 2: Build backend JAR ----------
-FROM gradle:8.10-jdk17 AS backend-build
+FROM gradle:8.10.2-jdk17 AS backend-build
 WORKDIR /app
 COPY backend ./backend
 COPY settings.gradle build.gradle ./
@@ -15,8 +15,20 @@ COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 RUN gradle :backend:bootJar -PskipFrontend --no-daemon
 
 # ---------- Stage 3: Runtime ----------
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17.0.13_11-jre-alpine
 WORKDIR /app
-COPY --from=backend-build /app/backend/build/libs/*.jar app.jar
+
+# non-root 사용자 생성
+RUN addgroup -S app && adduser -S -G app app \
+    && apk add --no-cache curl \
+    && rm -rf /var/cache/apk/*
+
+COPY --from=backend-build --chown=app:app /app/backend/build/libs/*.jar app.jar
+
+USER app
 EXPOSE 8082
-ENTRYPOINT ["java", "-jar", "/app/app.jar"]
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD curl -fsS http://localhost:8082/api/recipes?size=1 >/dev/null || exit 1
+
+ENTRYPOINT ["java", "-XX:MaxRAMPercentage=75.0", "-jar", "/app/app.jar"]

@@ -145,6 +145,11 @@ public class RecipeService {
         public AccessDeniedException(String msg) { super(msg); }
     }
 
+    /** Gemini/YouTube 등 외부 시스템과의 연동 실패. 사용자에게 원본 메시지를 노출하지 않음. */
+    public static class RecipeProcessingException extends RuntimeException {
+        public RecipeProcessingException(String msg, Throwable cause) { super(msg, cause); }
+    }
+
     private String buildPrompt(YouTubeService.VideoInfo info) {
         StringBuilder sb = new StringBuilder();
         sb.append("다음 YouTube 요리 영상의 정보를 보고 레시피를 JSON으로 추출해주세요.\n\n");
@@ -226,7 +231,10 @@ public class RecipeService {
 
             return recipe;
         } catch (Exception e) {
-            throw new RuntimeException("Gemini 응답 파싱 실패: " + e.getMessage() + "\n원본: " + raw, e);
+            log.warn("Gemini 응답 파싱 실패: {} / 원본(앞 500자): {}",
+                    e.getMessage(),
+                    raw == null ? "<null>" : raw.substring(0, Math.min(raw.length(), 500)));
+            throw new RecipeProcessingException("Gemini 응답 파싱 실패", e);
         }
     }
 }
