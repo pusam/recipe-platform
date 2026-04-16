@@ -1,5 +1,6 @@
 <template>
   <div class="app">
+    <div v-if="offline" class="offline-banner">오프라인 상태입니다. 일부 기능이 제한됩니다.</div>
     <template v-if="!$route.meta.standalone">
       <header class="nav">
         <router-link to="/" class="brand">🍳 Recipe Platform</router-link>
@@ -33,7 +34,11 @@ import { authStore } from '@/stores/auth'
 
 export default {
   name: 'App',
-  data() { return { authStore } },
+  data() { return { authStore, offline: !navigator.onLine } },
+  mounted() {
+    window.addEventListener('online', () => { this.offline = false })
+    window.addEventListener('offline', () => { this.offline = true })
+  },
   methods: {
     logout() {
       authStore.clear()
@@ -45,7 +50,7 @@ export default {
 
 <style>
 * { box-sizing: border-box; }
-html, body, #app { margin: 0; padding: 0; min-height: 100vh; font-family: 'Pretendard', -apple-system, sans-serif; }
+html, body, #app { margin: 0; padding: 0; min-height: 100vh; min-height: 100dvh; font-family: 'Pretendard', -apple-system, sans-serif; }
 body {
   background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16213e 100%);
   background-attachment: fixed;
@@ -79,6 +84,10 @@ a { color: inherit; text-decoration: none; }
 .auth .user { opacity: 0.8; }
 .link-btn { background: none; border: none; color: inherit; cursor: pointer; padding: 6px 12px; font-size: 0.9rem; opacity: 0.7; }
 .link-btn:hover { opacity: 1; }
+.offline-banner {
+  background: #f59e0b; color: #1a1a2e;
+  text-align: center; padding: 8px; font-size: 0.85rem; font-weight: 600;
+}
 .content { max-width: 960px; margin: 0 auto; padding: 32px 24px; }
 
 @media (max-width: 768px) {
